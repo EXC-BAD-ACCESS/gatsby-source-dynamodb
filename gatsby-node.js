@@ -7,6 +7,11 @@ exports.sourceNodes = ( { actions, createNodeId, createContentDigest },
     const { createNode } = actions
     delete options.plugins
 
+    
+    AWS.config.update({
+      endpoint: options.endpoint
+    });
+    
     var docClient = new AWS.DynamoDB.DocumentClient({
       region: options.region,
       accessKeyId: options.accessKeyId, 
@@ -14,7 +19,11 @@ exports.sourceNodes = ( { actions, createNodeId, createContentDigest },
     });
 
     const processData = item => {
-      const nodeId = createNodeId(`dynamodb-${item.id}`)
+      const idField = options.fieldNameForNodeId ?? "id"
+      const nodeId = item[idField]
+        ? createNodeId(`dynamodb-${item[idField]}`)
+        : nodeContentDigest
+
       const nodeContentDigest = createContentDigest(item)
       
       const nodeData = Object.assign({}, item, {
@@ -44,8 +53,8 @@ exports.sourceNodes = ( { actions, createNodeId, createContentDigest },
     
         if (typeof data.LastEvaluatedKey != "undefined") {
           console.log("Scanning for more...");
-          params.ExclusiveStartKey = data.LastEvaluatedKey;
-          docClient.scan(params, onScan);
+          options.params.ExclusiveStartKey = data.LastEvaluatedKey;
+          docClient.scan(options.params, onScan);
         } else {
           resolve()
         }
