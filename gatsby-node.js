@@ -19,7 +19,7 @@ exports.sourceNodes = ( { actions, createNodeId, createContentDigest },
     });
 
     const processData = item => {
-      const idField = options.fieldNameForNodeId ?? "id"
+      const idField = options.fieldNameForNodeId || "id"
       const nodeId = item[idField]
         ? createNodeId(`dynamodb-${item[idField]}`)
         : nodeContentDigest
